@@ -100,6 +100,16 @@ function getPreviousFY(fyString) {
 // ENDPOINTS
 // -------------------------------------------------------------
 
+// Security PIN verification GET fallback (for direct browser test audits)
+app.get('/api/verify-pin', (req, res) => {
+  return res.status(405).json({
+    success: false,
+    error: 'Method Not Allowed. Please use a POST request to verify the security PIN.',
+    verification_server: 'online',
+    supported_methods: ['POST']
+  });
+});
+
 // Security PIN verification
 app.post('/api/verify-pin', async (req, res) => {
   try {
