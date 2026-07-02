@@ -14,6 +14,17 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Path normalization for serverless deployment
+app.use((req, res, next) => {
+  if (req.url.startsWith('/.netlify/functions/api')) {
+    req.url = req.url.replace('/.netlify/functions/api', '/api');
+  }
+  if (!req.url.startsWith('/api') && req.url !== '/' && !req.url.includes('.')) {
+    req.url = '/api' + req.url;
+  }
+  next();
+});
+
 // Setup Multer for memory storage (file buffer)
 const storage = multer.memoryStorage();
 const upload = multer({
