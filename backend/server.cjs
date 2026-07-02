@@ -25,6 +25,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serverless body parser normalization
+app.use((req, res, next) => {
+  if (req.apiGateway?.event?.body && (!req.body || Object.keys(req.body).length === 0)) {
+    try {
+      let bodyText = req.apiGateway.event.body;
+      if (req.apiGateway.event.isBase64Encoded) {
+        bodyText = Buffer.from(bodyText, 'base64').toString('utf8');
+      }
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        req.body = JSON.parse(bodyText);
+      } else if (contentType.includes('application/x-www-form-urlencoded')) {
+        const queryParams = new URLSearchParams(bodyText);
+        req.body = {};
+        for (const [key, value] of queryParams.entries()) {
+          req.body[key] = value;
+        }
+      }
+    } catch (e) {
+      console.warn('Serverless body parser middleware failed:', e.message);
+    }
+  }
+  next();
+});
+
 // Setup Multer for memory storage (file buffer)
 const storage = multer.memoryStorage();
 const upload = multer({
